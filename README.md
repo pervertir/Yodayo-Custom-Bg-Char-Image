@@ -19,11 +19,13 @@ https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAn
 >[!NOTE]
 Make sure your script is enabled from the tamper monkey extension. Refresh the page to load the buttons.
 
-![UI Description](https://github.com/deepratnaawale/Yodayo-Custom-Chat-Background-And-Image-TamperMonkey-Script/blob/main/UI.png)
+![UI Description](UI.png)
 
-From Left to Right: Remove Background (Default Bg), Change Background, Delete Character Image(Default, empty if none), Change/Add Character Image
+From Left to Right: Remove Background (Default Bg), Change Background, Delete Character Image(Default, empty if none), Change/Add Character Image.
 
-![UI Expanded](https://github.com/deepratnaawale/Yodayo-Custom-Chat-Background-And-Image-TamperMonkey-Script/blob/main/UI-Expanded.png)
+
+![UI Expanded](UI-Expanded.png)
+
 
 When Change Background / Change Character Image Button is pressed you will get two input boxes, one for uploading files and the other for urls.
 
