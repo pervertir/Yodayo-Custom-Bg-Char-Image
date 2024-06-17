@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Yodayo Custom Chat Background
-// @namespace    Deepratna_Awale
+// @namespace    Pervertir
 // @version      1.4
 // @description  Change the background images of ANY Yodayo Chat and Character to any image and remember the setting for each chat. The memory is not shared for a character but different for each chat.
 
