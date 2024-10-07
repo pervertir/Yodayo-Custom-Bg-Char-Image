@@ -11,7 +11,7 @@
 // @installURL   https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 // @updateURL    https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 
-// @match        https://yodayo.com/tavern/chat/*
+// @match        https://moescape.com/tavern/chat/*
 // @grant        GM_xmlhttpRequest
 // @connect      *
 
