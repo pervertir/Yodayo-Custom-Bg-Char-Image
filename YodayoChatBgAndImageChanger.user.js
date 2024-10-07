@@ -1,21 +1,21 @@
 // ==UserScript==
 // @name         Yodayo Custom Chat Background
 // @namespace    Pervertir
-// @version      1.4
+// @version      1.6
 // @description  Change the background images of ANY Yodayo Chat and Character to any image and remember the setting for each chat. The memory is not shared for a character but different for each chat.
 
 // @author       pervertir
 
 // @homepageURL  https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image
 // @supportURL   https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/issues
-// @installURL   https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
+// @downloadURL   https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 // @updateURL    https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 
 // @match        https://moescape.ai/tavern/chat/*
 // @grant        GM_xmlhttpRequest
 // @connect      *
 
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=yodayo.com
+// @icon         https://moescape.ai/assets/images/logo.svg
 // ==/UserScript==
 
 (function () {
