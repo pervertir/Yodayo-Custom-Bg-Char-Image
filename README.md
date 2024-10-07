@@ -21,7 +21,7 @@ Make sure your script is enabled from the tamper monkey extension. Refresh the p
 
 ![UI Description](UI.png)
 
-From Left to Right: Remove Background (Default Bg), Change Background, Delete Character Image(Default, empty if none), Change/Add Character Image.
+From Left to Right: Change Background, Change Character Image, Remove Background, Delete Character Image(Default, empty if none).
 
 
 ![UI Expanded](UI-Expanded.png)
