@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yodayo Custom Chat Background
 // @namespace    Pervertir
-// @version      1.7
+// @version      1.8
 // @description  Change the background images of ANY Yodayo Chat and Character to any image and remember the setting for each chat. The memory is not shared for a character but different for each chat.
 
 // @author       pervertir
@@ -11,11 +11,12 @@
 // @downloadURL   https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 // @updateURL    https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 
+// @match        https://yodayo.com/tavern/chat/*
 // @match        https://moescape.ai/tavern/chat/*
 // @grant        GM_xmlhttpRequest
 // @connect      *
 
-// @icon         https://moescape.ai/assets/images/logo.svg
+// @icon         https://yodayo.com/assets/images/logo.svg
 // ==/UserScript==
 
 (function () {
@@ -157,13 +158,16 @@
 
     async function setBackgroundImage(imageBase64) {
         setTimeout(async function () {
-            const targetDivs = document.querySelectorAll('.bg-cover, .bg-primaryBg');
+            const targetDivs = document.querySelectorAll('.bg-cover');
             if (!targetDivs.length) {
                 console.error('Background divs not found.');
                 return;
             }
-            const divElements = Array.from(targetDivs).filter((element) => element.tagName === 'DIV');
-
+            let divElements = Array.from(targetDivs).filter((element) => element.tagName === 'DIV');
+            let next = divElements[0]?.nextSibling;
+            if (next) {
+                divElements.push(next);
+            }
             console.log('Setting new background image');
             divElements.forEach((targetDiv) => {
                 targetDiv.style.backgroundImage = `url('data:image;base64,${imageBase64}')`;
@@ -234,42 +238,42 @@
     }
 
 
+    // Function to convert file to Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Function to handle file input change
+    async function handleFileInputChange(event) {
+        const file = event.target.files[0];
+        const imageBase64 = await fileToBase64(file);
+        const action = document.querySelector('.input-container').dataset.action;
+        if (action === 'setBackgroundImage' && imageBase64) {
+            setBackgroundImage(imageBase64);
+        } else if (action === 'setCharacterImage' && imageBase64) {
+            setCharacterImage(imageBase64);
+        }
+    }
+
+    // Function to handle URL input change
+    async function handleUrlInputChange(event) {
+        const url = event.target.value;
+        const imageBase64 = await urlToBase64(url);
+        const action = document.querySelector('.input-container').dataset.action;
+        if (action === 'setBackgroundImage' && imageBase64) {
+            setBackgroundImage(imageBase64);
+        } else if (action === 'setCharacterImage' && imageBase64) {
+            setCharacterImage(imageBase64);
+        }
+    }
+
     async function setupInputs() {
         console.log('Setting up inputs...');
-
-        // Function to convert file to Base64
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Function to handle file input change
-        async function handleFileInputChange(event) {
-            const file = event.target.files[0];
-            const imageBase64 = await fileToBase64(file);
-            const action = document.querySelector('.input-container').dataset.action;
-            if (action === 'setBackgroundImage' && imageBase64) {
-                setBackgroundImage(imageBase64);
-            } else if (action === 'setCharacterImage' && imageBase64) {
-                setCharacterImage(imageBase64);
-            }
-        }
-
-        // Function to handle URL input change
-        async function handleUrlInputChange(event) {
-            const url = event.target.value;
-            const imageBase64 = await urlToBase64(url);
-            const action = document.querySelector('.input-container').dataset.action;
-            if (action === 'setBackgroundImage' && imageBase64) {
-                setBackgroundImage(imageBase64);
-            } else if (action === 'setCharacterImage' && imageBase64) {
-                setCharacterImage(imageBase64);
-            }
-        }
 
         // Add button element
         const changeBackgroundButton = document.createElement('button');
@@ -342,7 +346,7 @@
         urlInput.addEventListener('input', handleUrlInputChange);
 
         // const targetElement = document.querySelector('#selected-model-container');
-        let targetElement = document.querySelector('div.sticky.left-1\\/2.ml-4.flex.max-w-full.flex-1.-translate-x-1\\/2.cursor-pointer.justify-center.gap-4.text-primaryText');
+        let targetElement = document.querySelector('#selected-model-container > button');
         if (targetElement) {
             console.log('Char name targetfound.')
             // Create container for inputs
@@ -364,7 +368,8 @@
             buttonContainer.appendChild(removeCharacterButton);
             
             targetElement.classList.remove('left-1/2','-translate-x-1/2'); // model selector div
-            targetElement.nextSibling.classList.remove('flex-1');
+            // targetElement.nextSibling.classList.remove('flex-1');
+            targetElement.parentNode.classList.add('flex', 'flex-2');
             targetElement.parentNode.insertBefore(buttonContainer, targetElement.nextSibling);
 
             const yodayo_logo = '.flex.flex-1.items-center.justify-start';
@@ -428,7 +433,7 @@
 
 
     // Call the waitForElement function with the desired selector and callback
-    waitForElement('div.sticky.left-1\\/2.ml-4.flex.max-w-full.flex-1.-translate-x-1\\/2.cursor-pointer.justify-center.gap-4.text-primaryText', () => { // Model Loader has loaded, proceed with adding the menu
+    waitForElement('#selected-model-container > button', () => { // Model Loader has loaded, proceed with adding the menu
         // Initialize DB
         openDatabase();
 
