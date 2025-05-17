@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yodayo Custom Chat Background
 // @namespace    Pervertir
-// @version      1.8
+// @version      1.9
 // @description  Change the background images of ANY Yodayo Chat and Character to any image and remember the setting for each chat. The memory is not shared for a character but different for each chat.
 
 // @author       pervertir
@@ -346,7 +346,7 @@
         urlInput.addEventListener('input', handleUrlInputChange);
 
         // const targetElement = document.querySelector('#selected-model-container');
-        let targetElement = document.querySelector('#selected-model-container > button');
+        let targetElement = document.querySelector('#subscribe-popup-container');
         if (targetElement) {
             console.log('Char name targetfound.')
             // Create container for inputs
@@ -433,7 +433,7 @@
 
 
     // Call the waitForElement function with the desired selector and callback
-    waitForElement('#selected-model-container > button', () => { // Model Loader has loaded, proceed with adding the menu
+    waitForElement('#subscribe-popup-container', () => { // Model Loader has loaded, proceed with adding the menu
         // Initialize DB
         openDatabase();
 
