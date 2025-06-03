@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yodayo Custom Chat Background
 // @namespace    Pervertir
-// @version      1.9
+// @version      2.0
 // @description  Change the background images of ANY Yodayo Chat and Character to any image and remember the setting for each chat. The memory is not shared for a character but different for each chat.
 
 // @author       pervertir
@@ -171,7 +171,7 @@
             console.log('Setting new background image');
             divElements.forEach((targetDiv) => {
                 targetDiv.style.backgroundImage = `url('data:image;base64,${imageBase64}')`;
-                targetDiv.style.backgroundSize = 'cover';
+                targetDiv.style.backgroundSize = 'contain';
                 targetDiv.classList.remove('container');
             });
 
@@ -351,7 +351,7 @@
             console.log('Char name targetfound.')
             // Create container for inputs
             const inputContainer = document.createElement('div');
-            inputContainer.classList.add('input-container', 'hidden', 'flex', 'items-center', 'flex-col','p-2', 'order-3');
+            inputContainer.classList.add('input-container', 'hidden', 'flex', 'items-center', 'flex', 'flex-auto','p-2', 'order-3');
             inputContainer.style.maxWidth = '50%';
             
             // Append inputs to container
@@ -369,14 +369,14 @@
             
             targetElement.classList.remove('left-1/2','-translate-x-1/2'); // model selector div
             // targetElement.nextSibling.classList.remove('flex-1');
-            targetElement.parentNode.classList.add('flex', 'flex-2');
+            targetElement.parentNode.classList.add('flex', 'flex-auto');
             targetElement.parentNode.insertBefore(buttonContainer, targetElement.nextSibling);
 
             const yodayo_logo = '.flex.flex-1.items-center.justify-start';
             // Call the waitForElement function with the desired selector and callback
             waitForElement(yodayo_logo, () => {
                 document.querySelector(yodayo_logo)
-                    .classList.replace('flex-1', 'flex-none');
+                    .classList.replace('flex-1', 'flex-auto');
             });
 
 
