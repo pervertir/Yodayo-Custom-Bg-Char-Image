@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Yodayo Custom Chat Background
 // @namespace    Pervertir
-// @version      2.0
-// @description  Change the background images of ANY Yodayo Chat and Character to any image and remember the setting for each chat. The memory is not shared for a character but different for each chat.
+// @version      2.1
+// @description  Change the background and Character image of ANY Yodayo Chat (per chat).
 
 // @author       pervertir
 
@@ -11,8 +11,8 @@
 // @downloadURL   https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 // @updateURL    https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 
-// @match        https://yodayo.com/tavern/chat/*
-// @match        https://moescape.ai/tavern/chat/*
+// @match        https://yodayo.com/*
+// @match        https://moescape.ai/*
 // @grant        GM_xmlhttpRequest
 // @connect      *
 
@@ -26,27 +26,28 @@
     const DB_VERSION = 1;
     const BACKGROUND_OBJECT_STORE_NAME = 'Backgrounds';
     const CHARACTER_OBJECT_STORE_NAME = 'Characters';
-    const CHAT_ID = window.location.pathname.split('/').filter(Boolean).pop();
-    const CHAR_ID = 'char_' + CHAT_ID;
+    let CHAT_ID = window.location.pathname.split('/').filter(Boolean).pop();
+    let CHAR_ID = 'char_' + CHAT_ID;
+    let db;
+    const setBgToContain = false; // Set to true to use bg-contain, false for bg-cover
+
     console.log(`Chat ID: ${CHAT_ID}`);
 
-
-    let db;
-
-    function openDatabase() {
+    /**
+     * Opens (and upgrades if needed) the IndexedDB database for storing backgrounds and character images.
+     * @returns {Promise<IDBDatabase>} Promise that resolves to the opened database.
+     */
+    const openDatabase = () => {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
-
             request.onerror = (event) => {
                 console.error('Failed to open database:', event.target.error);
                 reject(event.target.error);
             };
-
             request.onsuccess = (event) => {
                 db = event.target.result;
                 resolve(db);
             };
-
             request.onupgradeneeded = (event) => {
                 db = event.target.result;
                 db.createObjectStore(BACKGROUND_OBJECT_STORE_NAME, { keyPath: 'CHAT_ID' });
@@ -55,37 +56,50 @@
                 console.log('Created Object Store', 'characters');
             };
         });
-    }
+    };
 
-    async function saveBackgroundImage(CHAT_ID, imageBase64) {
+    /**
+     * Saves a background image (base64) for a chat.
+     * @param {string} CHAT_ID
+     * @param {string|null} imageBase64
+     * @returns {Promise<void>}
+     */
+    const saveBackgroundImage = async (CHAT_ID, imageBase64) => {
         if (!db) {
             await openDatabase();
         }
-
         const transaction = db.transaction(BACKGROUND_OBJECT_STORE_NAME, 'readwrite');
         const objectStore = transaction.objectStore(BACKGROUND_OBJECT_STORE_NAME);
         objectStore.put({ CHAT_ID, imageBase64 });
-    }
+    };
 
-    async function saveCharacterImage(CHAR_ID, imageBase64) {
+    /**
+     * Saves a character image (base64) for a character.
+     * @param {string} CHAR_ID
+     * @param {string|null} imageBase64
+     * @returns {Promise<void>}
+     */
+    const saveCharacterImage = async (CHAR_ID, imageBase64) => {
         if (!db) {
             await openDatabase();
         }
-
         const transaction = db.transaction(CHARACTER_OBJECT_STORE_NAME, 'readwrite');
         const objectStore = transaction.objectStore(CHARACTER_OBJECT_STORE_NAME);
         objectStore.put({ CHAR_ID, imageBase64 });
-    }
+    };
 
-    async function getBackgroundImage(CHAT_ID) {
+    /**
+     * Retrieves the background image (base64) for a chat.
+     * @param {string} CHAT_ID
+     * @returns {Promise<string|null>}
+     */
+    const getBackgroundImage = async (CHAT_ID) => {
         if (!db) {
             await openDatabase();
         }
-
         const transaction = db.transaction(BACKGROUND_OBJECT_STORE_NAME, 'readonly');
         const objectStore = transaction.objectStore(BACKGROUND_OBJECT_STORE_NAME);
         const request = objectStore.get(CHAT_ID);
-
         return new Promise((resolve, reject) => {
             request.onsuccess = (event) => {
                 const result = event.target.result;
@@ -95,24 +109,25 @@
                     resolve(null);
                 }
             };
-
             request.onerror = (event) => {
                 console.error('Failed to get image:', event.target.error);
                 reject(event.target.error);
             };
         });
-    }
+    };
 
-
-    async function getCharacterImage(CHAR_ID) {
+    /**
+     * Retrieves the character image (base64) for a character.
+     * @param {string} CHAR_ID
+     * @returns {Promise<string|null>}
+     */
+    const getCharacterImage = async (CHAR_ID) => {
         if (!db) {
             await openDatabase();
         }
-
         const transaction = db.transaction(CHARACTER_OBJECT_STORE_NAME, 'readonly');
         const objectStore = transaction.objectStore(CHARACTER_OBJECT_STORE_NAME);
         const request = objectStore.get(CHAR_ID);
-
         return new Promise((resolve, reject) => {
             request.onsuccess = (event) => {
                 const result = event.target.result;
@@ -122,17 +137,19 @@
                     resolve(null);
                 }
             };
-
             request.onerror = (event) => {
                 console.error('Failed to get image:', event.target.error);
                 reject(event.target.error);
             };
         });
-    }
+    };
 
-
-    // Function to convert URL to Base64
-    async function urlToBase64(url) {
+    /**
+     * Converts an image URL to a base64 string using GM_xmlhttpRequest.
+     * @param {string} url
+     * @returns {Promise<string>} base64 string (no data: prefix)
+     */
+    const urlToBase64 = async (url) => {
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: 'GET',
@@ -154,10 +171,15 @@
                 }
             });
         });
-    }
+    };
 
-    async function setBackgroundImage(imageBase64) {
-        setTimeout(async function () {
+    /**
+     * Sets the chat background image from a base64 string.
+     * @param {string|null} imageBase64
+     * @returns {Promise<void>}
+     */
+    const setBackgroundImage = async (imageBase64) => {
+        setTimeout(async () => {
             const targetDivs = document.querySelectorAll('.bg-cover');
             if (!targetDivs.length) {
                 console.error('Background divs not found.');
@@ -170,32 +192,38 @@
             }
             console.log('Setting new background image');
             divElements.forEach((targetDiv) => {
-                targetDiv.style.backgroundImage = `url('data:image;base64,${imageBase64}')`;
-                targetDiv.style.backgroundSize = 'contain';
-                targetDiv.classList.remove('container');
+                if (imageBase64) {
+                    targetDiv.style.backgroundImage = `url('data:image;base64,${imageBase64}')`;
+                }
+                if (setBgToContain) {
+                    targetDiv.classList.remove('bg-cover');
+                    targetDiv.classList.add('bg-contain');
+                    targetDiv.classList.remove('container');
+                }
             });
-
             // Save to local db if image is different
             let savedImageBase64 = await getBackgroundImage(CHAT_ID);
             if (savedImageBase64 !== imageBase64) {
                 await saveBackgroundImage(CHAT_ID, imageBase64);
-                console.log('Saved background for Chat Id:', CHAT_ID, ' : ', imageBase64.substring(0, 100));
+                console.log('Saved background for Chat Id:', CHAT_ID, ' : ', imageBase64 ? imageBase64.substring(0, 100) : 'null');
             } else {
                 console.log('Background image already exists in DB.');
             }
-        }, 1000)
-    }
+        }, 1000);
+    };
 
-    async function setCharacterImage(imageBase64) {
-        setTimeout(async function () { // Ensuring the timeout waits for 2 seconds before executing the code within
+    /**
+     * Sets the character image from a base64 string.
+     * @param {string|null} imageBase64
+     * @returns {Promise<void>}
+     */
+    const setCharacterImage = async (imageBase64) => {
+        setTimeout(async () => {
             console.log('Wait for 2 seconds for page to load.');
-
             const characterContainer = document.querySelector('.pointer-events-none.absolute.inset-0.mt-16.overflow-hidden.landscape\\:inset-y-0.landscape\\:left-0.landscape\\:right-auto.landscape\\:w-1\\/2');
-
             if (characterContainer) {
                 // Check if character image already exists
                 const existingImage = characterContainer.querySelector('div > div > img');
-
                 if (existingImage) {
                     // Change the existing character image if different
                     let savedImageBase64 = await getCharacterImage(CHAR_ID);
@@ -203,11 +231,11 @@
                     existingImage.style.height = "90vh";
                     console.log('Changed Character Image.');
                     if (savedImageBase64 !== imageBase64) {
-                        console.log('Added to DB', CHAR_ID, ' : ', imageBase64.substring(0, 100));
+                        console.log('Added to DB', CHAR_ID, ' : ', imageBase64 ? imageBase64.substring(0, 100) : 'null');
                         await saveCharacterImage(CHAR_ID, imageBase64);
                     } else {
                         console.log('Character image already exists in DB.');
-                        console.log(CHAR_ID, ' : ', imageBase64.substring(0, 100));
+                        console.log(CHAR_ID, ' : ', imageBase64 ? imageBase64.substring(0, 100) : 'null');
                     }
                 } else {
                     // Ensure that the nested divs exist
@@ -217,15 +245,14 @@
                         innerDiv = document.createElement('div');
                         const wrapperDiv = document.createElement('div');
                         wrapperDiv.appendChild(innerDiv);
-                        characterContainer.innerHTML = ''; // Clear any existing content
+                        characterContainer.innerHTML = '';
                         characterContainer.appendChild(wrapperDiv);
                     }
-
                     // Create a new character image
                     const newImage = document.createElement('img');
                     newImage.src = `data:image;base64,${imageBase64}`;
                     newImage.classList.add('mx-auto', 'h-full', 'w-auto', 'object-contain', 'object-bottom');
-                    innerDiv.innerHTML = ''; // Clear any existing content within the inner div
+                    innerDiv.innerHTML = '';
                     innerDiv.appendChild(newImage);
                     innerDiv.style.height = "90vh";
                     console.log('New Character image set.');
@@ -234,22 +261,29 @@
             } else {
                 console.error('Character container not found');
             }
-        }, 1000); // Delay of 2 seconds
-    }
+        }, 1000);
+    };
 
-
-    // Function to convert file to Base64
-    function fileToBase64(file) {
+    /**
+     * Converts a File object to a base64 string.
+     * @param {File} file
+     * @returns {Promise<string>} base64 string (no data: prefix)
+     */
+    const fileToBase64 = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result.split(',')[1]);
             reader.onerror = error => reject(error);
             reader.readAsDataURL(file);
         });
-    }
+    };
 
-    // Function to handle file input change
-    async function handleFileInputChange(event) {
+    /**
+     * Handles file input change event for background/character image.
+     * @param {Event} event
+     * @returns {Promise<void>}
+     */
+    const handleFileInputChange = async (event) => {
         const file = event.target.files[0];
         const imageBase64 = await fileToBase64(file);
         const action = document.querySelector('.input-container').dataset.action;
@@ -258,10 +292,14 @@
         } else if (action === 'setCharacterImage' && imageBase64) {
             setCharacterImage(imageBase64);
         }
-    }
+    };
 
-    // Function to handle URL input change
-    async function handleUrlInputChange(event) {
+    /**
+     * Handles URL input change event for background/character image.
+     * @param {Event} event
+     * @returns {Promise<void>}
+     */
+    const handleUrlInputChange = async (event) => {
         const url = event.target.value;
         const imageBase64 = await urlToBase64(url);
         const action = document.querySelector('.input-container').dataset.action;
@@ -270,11 +308,14 @@
         } else if (action === 'setCharacterImage' && imageBase64) {
             setCharacterImage(imageBase64);
         }
-    }
+    };
 
-    async function setupInputs() {
+    /**
+     * Sets up the UI input elements and buttons for changing/removing backgrounds and character images.
+     * @returns {Promise<void>}
+     */
+    const setupInputs = async () => {
         console.log('Setting up inputs...');
-
         // Add button element
         const changeBackgroundButton = document.createElement('button');
         changeBackgroundButton.title = 'Change Background';
@@ -351,23 +392,23 @@
             console.log('Char name targetfound.')
             // Create container for inputs
             const inputContainer = document.createElement('div');
-            inputContainer.classList.add('input-container', 'hidden', 'flex', 'items-center', 'flex', 'flex-auto','p-2', 'order-3');
+            inputContainer.classList.add('input-container', 'hidden', 'flex', 'items-center', 'flex', 'flex-auto', 'p-2', 'order-3');
             inputContainer.style.maxWidth = '50%';
-            
+
             // Append inputs to container
             inputContainer.appendChild(fileInput);
             inputContainer.appendChild(urlInput);
-            
+
             const buttonContainer = document.createElement('div');
             buttonContainer.classList.add('flex', 'justify-end', 'ml-2', 'gap-4');
-            
+
             buttonContainer.appendChild(inputContainer);
             buttonContainer.appendChild(changeBackgroundButton);
             buttonContainer.appendChild(changeCharacterButton);
             buttonContainer.appendChild(removeBgButton);
             buttonContainer.appendChild(removeCharacterButton);
-            
-            targetElement.classList.remove('left-1/2','-translate-x-1/2'); // model selector div
+
+            targetElement.classList.remove('left-1/2', '-translate-x-1/2'); // model selector div
             // targetElement.nextSibling.classList.remove('flex-1');
             targetElement.parentNode.classList.add('flex', 'flex-auto');
             targetElement.parentNode.insertBefore(buttonContainer, targetElement.nextSibling);
@@ -389,63 +430,91 @@
         } else {
             console.error('Target element not found');
         }
-    }
+    };
 
 
-    // Function to observe DOM for the target element
-    function waitForElement(selector, callback) {
-        const observer = new MutationObserver((mutations, observer) => {
+    /**
+     * Observes the DOM for the target element and calls the callback when found. Cleans up observer after found.
+     * @param {string} selector
+     * @param {(element: Element) => void} callback
+     */
+    const waitForElement = (selector, callback) => {
+        const observer = new MutationObserver(() => {
             const element = document.querySelector(selector);
             if (element) {
                 callback(element);
                 observer.disconnect();
             }
         });
-
         observer.observe(document.body, {
             childList: true,
             subtree: true
         });
-    }
+    };
 
-    // Check local storage for previously set background image
-    async function applySavedBackground() {
+    /**
+     * Waits for the URL to match a given regex pattern. Cleans up observer after match.
+     * @param {RegExp} regex
+     * @returns {Promise<void>}
+     */
+    const waitForUrlMatch = (regex) => {
+        const observer = new MutationObserver(() => {
+            if (location.href !== lastUrl) {
+                lastUrl = location.href;
+                check();
+            }
+        });
+        observer.observe(document, { subtree: true, childList: true });
+
+        return new Promise(resolve => {
+            let lastUrl = location.href;
+            const check = () => {
+                if (regex.test(location.href)) {
+                    if (observer) {
+                        observer.disconnect();
+                    }
+                    resolve();
+                    return true;
+                }
+                return false;
+            };
+            if (check()) return;
+        });
+    };
+
+    /**
+     * Applies the saved background image for the current chat.
+     * @returns {Promise<void>}
+     */
+    const applySavedBackground = async () => {
         setTimeout(async () => {
             let savedImageBase64 = await getBackgroundImage(CHAT_ID);
             console.log(`Applying Background from DB: ${savedImageBase64 ? savedImageBase64.substring(0, 100) : 'null'}`);
-
-            if (savedImageBase64) {
-                setBackgroundImage(savedImageBase64);
-            }
+            setBackgroundImage(savedImageBase64);
         }, 250);
-    }
+    };
 
-    async function applySavedCharacter() {
+    /**
+     * Applies the saved character image for the current chat.
+     * @returns {Promise<void>}
+     */
+    const applySavedCharacter = async () => {
         setTimeout(async () => {
             let savedCharacterImageBase64 = await getCharacterImage(CHAR_ID);
             console.log(`Applying Saved Character from DB: ${savedCharacterImageBase64 ? savedCharacterImageBase64.substring(0, 100) : 'null'}`);
-
             if (savedCharacterImageBase64) {
                 setCharacterImage(savedCharacterImageBase64);
             }
         }, 200);
-    }
+    };
 
-
-    // Call the waitForElement function with the desired selector and callback
-    waitForElement('#subscribe-popup-container', () => { // Model Loader has loaded, proceed with adding the menu
-        // Initialize DB
-        openDatabase();
-
-        // Add Change Bg, Remove Bg, Change Char, Remove Char, file input, url input boxes
+    // Main initialization logic: Wait for URL, then setup UI and apply saved images
+    (async () => {
+        await waitForUrlMatch(/^https:\/\/(yodayo\.com|moescape\.ai)\/tavern\/chat\//);
+        await new Promise(resolve => waitForElement('#subscribe-popup-container', resolve));
+        await openDatabase();
         setupInputs();
-
-        // Wait for element holding character image to load and then change it
         waitForElement('body > main > section > div > div.pointer-events-none.absolute.inset-0.mt-16.overflow-hidden.landscape\\:inset-y-0.landscape\\:left-0.landscape\\:right-auto.landscape\\:w-1\\/2', applySavedCharacter);
-
-        // Wait for background to load and then change it
         waitForElement('.bg-cover', applySavedBackground);
-
-        // Find and modify the specific div
-    });
+    })();
 })();
