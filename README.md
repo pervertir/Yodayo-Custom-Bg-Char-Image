@@ -1,14 +1,26 @@
 # Yodayo-Custom-Chat-Background-And-Image-TamperMonkey-Script
  Allows user to change the background image of Yodayo Chats to any image and remember the setting for each chat.
 
+# PLEASE GOTO:
+## This script is deprecated, the new script is available at:
+```
+https://github.com/deepratna-awale/Yodayo-Chat-Customizer
+```
 
 # Requirements
 
 ## Tamper Monkey/ Greasy Monkey
 Install from: [Tamper Monkey](https://www.tampermonkey.net/)
 
-## Get the script and enable
+
+
+## Get the script and enable (This will download the new version of the script..)
 Paste this link in your browser, the script should auto install and update: 
+```
+https://github.com/deepratna-awale/Yodayo-Chat-Customizer/raw/refs/heads/main/MoescapeCustomUI.user.js
+```
+
+### Old script
 ```
 https://github.com/pervertir/Yodayo-Custom-Bg-Char-Image/raw/main/YodayoChatBgAndImageChanger.user.js
 ```
